@@ -29,7 +29,7 @@ The main goal of creating this project is to expose myself to new technologies t
 
 1. **Frontend** polls to return an insight summary if available via useEffect whenever a user uploads a file.
 2. **Lambda** meant for ingestion reads from the SQS queue in the background, downloads and validates the S3 file via a set of rulesets from the chain of responsibility design pattern
-3. **Lambda** calls the AI to generate resume insights and transitions the RDS file status to PROCESSED. If any errors occur in between, state will be transitioned to INVALID. Note that state machine will account for retrying for transient errors like database downtime.
+3. **Lambda** calls the AI to generate resume insights and transitions the RDS file status to PROCESSED. If any errors occur in between, state will be transitioned to INVALID. Note that state machine will account for retrying for transient errors like database downtime via SQS. If message fails 3 times, it gets sent to a SQS dead letter queue for further analysis later on.
 4. **Lambda** meant for API endpoints successfully polls and fetches the completed insights from RDS to return to the user.
 5. **Cloudwatch** handles logs for the API request.
 
