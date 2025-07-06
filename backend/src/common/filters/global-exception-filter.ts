@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
+import { CORRELATION_ID_HEADER } from '../middlewares/correlation-id';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

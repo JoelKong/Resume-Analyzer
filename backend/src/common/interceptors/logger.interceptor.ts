@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
+import { CORRELATION_ID_HEADER } from '../middlewares/correlation-id';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {

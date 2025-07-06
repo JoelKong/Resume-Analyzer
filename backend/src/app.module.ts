@@ -4,14 +4,16 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ResumeModule } from './resume/resume.module';
 import { IngestionModule } from './ingestion/ingestion.module';
-import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { CorrelationIdMiddleware } from './common/middlewares/correlation-id';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Resume } from './common/entities/resume.entity';
+import configuration from './common/config/config-loader';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      load: [configuration],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -23,8 +25,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        autoLoadEntities: true,
-        synchronize: process.env.NODE_ENV !== 'production',
+        entities: [Resume],
+        synchronize: false,
       }),
     }),
     ResumeModule,
