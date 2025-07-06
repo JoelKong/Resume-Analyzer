@@ -79,11 +79,11 @@ The main goal of creating this project is to expose myself to new technologies t
 
 All endpoints are managed through **API Gateway** → **Lambda** and secured using API keys / IAM roles.
 
-| Method | Endpoint               | Description                       |
-| ------ | ---------------------- | --------------------------------- |
-| POST   | `/upload`              | Uploads resume metadata + job URL |
-| GET    | `/upload-history`      | Fetches user's resume history     |
-| GET    | `/resume-analysis/:id` | Returns OpenAI feedback           |
+| Method | Endpoint          | Description                       |
+| ------ | ----------------- | --------------------------------- |
+| POST   | `/upload`         | Uploads resume metadata + job URL |
+| GET    | `/upload-history` | Fetches user's resume history     |
+| GET    | `/analysis/:id`   | Returns OpenAI feedback           |
 
 ---
 
