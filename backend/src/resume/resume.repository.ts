@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Resume } from '../common/entities/resume.entity';
-import { FileStatus } from 'src/common/enums/file-status';
+import { FileStatus } from '../../src/common/enums/file-status';
 
 @Injectable()
 export class ResumeRepository {

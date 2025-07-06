@@ -10,7 +10,7 @@ import { UploadResumeRequestDto } from './dtos/request/upload-resume.request.dto
 import { UploadResumeResponseDto } from './dtos/response/upload-resume.response.dto';
 import { S3Service } from '../s3/s3.service';
 import { v4 as uuidv4 } from 'uuid';
-import { FileStatus } from 'src/common/enums/file-status';
+import { FileStatus } from '../../src/common/enums/file-status';
 import { GetResumeAnalysisResponseDto } from './dtos/response/get-resume-analysis.response.dto';
 
 @Injectable()

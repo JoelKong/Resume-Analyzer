@@ -1,7 +1,7 @@
-import { FileStatus } from 'src/common/enums/file-status';
+import { FileStatus } from '../../../../src/common/enums/file-status';
 import { Transition } from '../Istatemachine';
 import { FileStatusEvent } from './resume.state-machine.events';
-import { Resume } from 'src/common/entities/resume.entity';
+import { Resume } from '../../../../src/common/entities/resume.entity';
 import { FileStateHandlers } from './resume.state-machine.handlers';
 
 export const fileTransitions: Transition<
