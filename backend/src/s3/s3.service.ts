@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class S3Service {
@@ -33,6 +37,28 @@ export class S3Service {
       return key;
     } catch (error) {
       this.logger.error(`Failed to upload file ${key} to S3`, error.stack);
+      throw error;
+    }
+  }
+
+  async downloadFile(key: string): Promise<Buffer> {
+    this.logger.log(`Downloading file ${key} from bucket ${this.bucketName}`);
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+      const { Body } = await this.s3Client.send(command);
+      if (!Body) {
+        throw new Error(`File body is empty for key ${key}.`);
+      }
+      const chunks: Buffer[] = [];
+      for await (const chunk of Body as any) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    } catch (error) {
+      this.logger.error(`Failed to download file ${key} from S3`, error.stack);
       throw error;
     }
   }

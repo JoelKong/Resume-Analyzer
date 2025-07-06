@@ -28,4 +28,13 @@ export class ResumeRepository {
     this.logger.log(`Finding resume with id: ${id}`);
     return this.resumeRepository.findOneBy({ id });
   }
+
+  async findResumeByFileName(fileName: string): Promise<Resume | null> {
+    this.logger.log(`Finding resume with fileName: ${fileName}`);
+    return this.resumeRepository.findOneBy({ fileName });
+  }
+
+  async save(resume: Resume): Promise<Resume> {
+    return this.resumeRepository.save(resume);
+  }
 }

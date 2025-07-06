@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Resume } from './common/entities/resume.entity';
 import { S3Service } from './s3/s3.service';
 import { S3Module } from './s3/s3.module';
+import { LlmModule } from './llm/llm.module';
 import configuration from './common/config/config-loader';
 
 @Module({
@@ -32,6 +33,7 @@ import configuration from './common/config/config-loader';
     ResumeModule,
     IngestionModule,
     S3Module,
+    LlmModule,
   ],
   providers: [S3Service],
 })
