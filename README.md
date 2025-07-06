@@ -25,7 +25,7 @@ The main goal of creating this project is to expose myself to new technologies t
 
 ---
 
-## User Flow For Get Resume Insights (GET /resume-analysis/:id)
+## User Flow For Get Resume Insights (GET /analysis/:id)
 
 1. **Frontend** polls to return an insight summary if available via useEffect whenever a user uploads a file.
 2. **Lambda** meant for ingestion reads from the SQS queue in the background, downloads and validates the S3 file via a set of rulesets from the chain of responsibility design pattern
