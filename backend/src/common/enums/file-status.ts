@@ -1,5 +1,6 @@
 export enum FileStatus {
-  NEW = 'UPLOADED',
+  NEW = 'NEW',
+  PENDING = 'PENDING',
   PROCESSED = 'PROCESSED',
   INVALID = 'INVALID',
 }

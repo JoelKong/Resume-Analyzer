@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsUrl } from 'class-validator';
 
-export class UploadResumeDto {
+export class UploadResumeRequestDto {
   @IsUrl({}, { message: 'A valid job URL is required.' })
   @IsNotEmpty()
   jobUrl: string;

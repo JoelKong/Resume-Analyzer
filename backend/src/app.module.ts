@@ -1,12 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ResumeModule } from './resume/resume.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { CorrelationIdMiddleware } from './common/middlewares/correlation-id';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Resume } from './common/entities/resume.entity';
+import { S3Service } from './s3/s3.service';
+import { S3Module } from './s3/s3.module';
 import configuration from './common/config/config-loader';
 
 @Module({
@@ -31,9 +31,9 @@ import configuration from './common/config/config-loader';
     }),
     ResumeModule,
     IngestionModule,
+    S3Module,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [S3Service],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

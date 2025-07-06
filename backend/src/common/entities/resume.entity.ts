@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { FileStatus } from '../enums/filestatus.enum';
+import { FileStatus } from '../enums/file-status';
 
 @Entity('resumes')
 export class Resume {
