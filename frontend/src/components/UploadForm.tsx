@@ -1,8 +1,13 @@
 import { useState, type FormEvent, type ChangeEvent, useRef } from "react";
 import { Modal } from "./Modal";
 import { Spinner } from "./Spinner";
+import { uploadResume } from "../utils/api-service";
 
-export function UploadForm() {
+export interface UploadFormProps {
+  onUploadSuccess: (analysisId: string) => void;
+}
+
+export function UploadForm({ onUploadSuccess }: UploadFormProps) {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [jobUrl, setJobUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +43,7 @@ export function UploadForm() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!resumeFile || !jobUrl) {
       setModalContent({
@@ -59,21 +64,19 @@ export function UploadForm() {
     }
 
     setIsLoading(true);
-    // Placeholder for API call to POST /upload
-    console.log({
-      resume: resumeFile.name,
-      jobUrl,
-    });
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { id } = await uploadResume(resumeFile, jobUrl);
+      onUploadSuccess(id);
+    } catch (error) {
       setModalContent({
-        title: "Upload Successful",
-        message: `${resumeFile.name} has been uploaded and is being analyzed.`,
+        title: "Upload Failed",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred.",
       });
       setIsModalOpen(true);
-    }, 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

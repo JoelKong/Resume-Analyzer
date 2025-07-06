@@ -46,7 +46,7 @@ The main goal of creating this project is to expose myself to new technologies t
 
 ## State Machine Flow For File Status
 
-- A state machine might be overkill here but its to scale early to allow for more state transitions in the future
+- A state machine might be overkill here but its to scale early to allow for more state transitions in the future. Init state will be NEW. When processing, intermediary state will be PENDING, if anything goes wrong server side (transient), will let sqs retry and will still be pending and user will know. INVALID state will be for non-transient failures. PROCESSED will be the success case.
 
 ![State Machine Flow](./assets/state-machine-resume-analyzer.png)
 
