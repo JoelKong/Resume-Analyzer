@@ -1,0 +1,192 @@
+name: Resume Analyzer CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  code-scan:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "resume-analyzer"
+          path: "."
+          format: "HTML"
+          out: "dependency-check-report"
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dependency-Check-Report
+          path: dependency-check-report
+
+  build:
+    name: Build, Test, and Package
+    runs-on: ubuntu-latest
+    needs: [code-scan, dependency-check]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Frontend Dependencies
+        run: npm ci --prefix frontend
+
+      - name: Run Frontend Tests
+        run: echo "No frontend tests configured. Skipping."
+
+      - name: Build Frontend
+        run: npm run build --prefix frontend
+
+      - name: Install Backend Dependencies
+        run: npm ci --prefix backend
+
+      - name: Run Backend Tests
+        run: npm test --prefix backend
+
+      - name: Build Backend
+        run: npm run build --prefix backend
+
+      - name: Package API Lambda
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        run: |
+          cd backend
+          zip -r ../api-deployment-package.zip dist node_modules package.json
+
+      - name: Package Ingestion Lambda
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        run: |
+          cd backend
+          zip -r ../ingestion-deployment-package.zip dist node_modules package.json
+
+      - name: Upload Frontend Artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+      - name: Upload API Lambda Artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-lambda-package
+          path: api-deployment-package.zip
+
+      - name: Upload Ingestion Lambda Artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-lambda-package
+          path: ingestion-deployment-package.zip
+
+  deploy:
+    name: Deploy to ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    strategy:
+      matrix:
+        environment: [staging, uat, production]
+      fail-fast: true
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Download Frontend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Download API Lambda Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-lambda-package
+          path: backend/dist
+
+      - name: Download Ingestion Lambda Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ingestion-lambda-package
+          path: backend/dist
+
+      - name: Unzip Lambda packages
+        run: |
+          unzip backend/dist/api-deployment-package.zip -d backend/dist/api-lambda
+          unzip backend/dist/ingestion-deployment-package.zip -d backend/dist/ingestion-lambda
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform -chdir=iac init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+
+      - name: Terraform Workspace
+        id: workspace
+        run: terraform -chdir=iac workspace select ${{ matrix.environment }} || terraform -chdir=iac workspace new ${{ matrix.environment }}
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform -chdir=iac apply -auto-approve
+
+      - name: Sync Frontend to S3
+        run: |
+          BUCKET_NAME=$(terraform -chdir=iac output -raw frontend_s3_bucket_name)
+          aws s3 sync ./frontend/dist s3://${BUCKET_NAME}/ --delete
+
+  dast-scan:
+    name: ZAP Scan
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success() && github.ref == 'refs/heads/main'
+    steps:
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: ${{ secrets.STAGING_API_URL }}
+          artifact_name: zap-report-${{ github.run_id }}
